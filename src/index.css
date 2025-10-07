@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Publisher Book Website Design System - All colors MUST be HSL */
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 213 84% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 213 84% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 84% 12%;
+
+    --primary: 213 84% 12%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 213 84% 12%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 28 88% 52%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 213 84% 12%;
+
+    --radius: 0.75rem;
+
+    /* Publisher specific design tokens */
+    --publisher-navy: 213 84% 12%;
+    --publisher-navy-light: 213 50% 25%;
+    --publisher-orange: 28 88% 52%;
+    --publisher-orange-light: 28 88% 65%;
+    --publisher-cream: 45 60% 95%;
+    --publisher-gray: 210 15% 85%;
+    --publisher-text: 213 84% 12%;
+    --publisher-text-light: 215.4 16.3% 46.9%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--publisher-navy)), hsl(var(--publisher-navy-light)));
+    --gradient-card: linear-gradient(180deg, hsl(var(--background)), hsl(var(--publisher-cream)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--publisher-orange)), hsl(var(--publisher-orange-light)));
+
+    /* Shadows */
+    --shadow-book: 0 10px 30px -10px hsl(var(--publisher-navy) / 0.2);
+    --shadow-elegant: 0 4px 20px -4px hsl(var(--publisher-navy) / 0.15);
+    --shadow-glow: 0 0 40px hsl(var(--publisher-orange) / 0.3);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 213 84% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 213 84% 8%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 213 84% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 213 84% 12%;
+
+    --secondary: 213 50% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 213 50% 15%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 28 88% 65%;
+    --accent-foreground: 213 84% 12%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 213 50% 15%;
+    --input: 213 50% 15%;
+    --ring: 28 88% 65%;
+
+    /* Publisher dark mode */
+    --publisher-navy: 0 0% 98%;
+    --publisher-navy-light: 210 15% 85%;
+    --publisher-orange: 28 88% 65%;
+    --publisher-orange-light: 28 88% 75%;
+    --publisher-cream: 213 50% 15%;
+    --publisher-gray: 213 25% 25%;
+    --publisher-text: 0 0% 98%;
+    --publisher-text-light: 215 20.2% 65.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/30;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-border/80;
+  }
+  
+  /* Text clamping utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
