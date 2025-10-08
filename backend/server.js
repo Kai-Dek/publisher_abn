@@ -1,21 +1,20 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const authRoutes = require('./routes/auth');
-const bookRoutes = require('./routes/books');
-const adminRoutes = require('./routes/admin');
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+import authRoutes from './routes/auth.js';
+import bookRoutes from './routes/books.js';
+import adminRoutes from './routes/admin.js';
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MongoDB Connection
 let isConnected = false;
 
 const connectDB = async () => {
@@ -37,26 +36,21 @@ const connectDB = async () => {
   }
 };
 
-// Connect to DB
 connectDB();
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Health check
 app.get('/api', (req, res) => {
   res.json({ message: 'Library API is running!' });
 });
 
-// Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
-// Local development
 const PORT = process.env.PORT || 5000;
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
@@ -64,5 +58,4 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// Export for Vercel
-module.exports = app;
+export default app;
