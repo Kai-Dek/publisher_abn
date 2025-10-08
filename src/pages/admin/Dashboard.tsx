@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Book, Users, Package, TrendingUp } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
+import { adminStatsAPI } from '@/lib/api';
 
 interface Stats {
   totalBooks: number;
@@ -25,14 +26,16 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      setStats(data);
+      const response = await adminStatsAPI.getStats();
+      
+      if (response.success) {
+        setStats(response.data || {
+          totalBooks: 0,
+          totalUsers: 0,
+          availableBooks: 0,
+          totalStock: 0
+        });
+      }
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {

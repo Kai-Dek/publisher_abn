@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
+import { booksAPI, adminBooksAPI } from '@/lib/api';
 
 interface BookFormData {
   title: string;
@@ -52,31 +53,23 @@ const BookForm = () => {
 
   const fetchBook = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/books/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const result = await response.json();
+      const response = await booksAPI.getById(id!);
       
-      // ✅ FIX: API mengembalikan { success, data } bukan { book }
-      if (result.success && result.data) {
-        // Map field names dari API ke form
+      if (response.success && response.data) {
         setFormData({
-          title: result.data.title || '',
-          author: result.data.author || '',
-          isbn: result.data.issn || result.data.isbn || '', // API menggunakan 'issn'
-          description: result.data.description || '',
-          category: result.data.category || '',
-          publisher: result.data.publisher || '',
-          publishedYear: result.data.published_year || result.data.publishedYear || new Date().getFullYear(),
-          pages: result.data.pages || 0,
-          language: result.data.language || 'Indonesian',
-          coverImage: result.data.cover || result.data.coverImage || '',
-          stock: result.data.stock || 0,
-          available: result.data.available || 0,
-          status: result.data.status || 'available'
+          title: response.data.title || '',
+          author: response.data.author || '',
+          isbn: response.data.issn || response.data.isbn || '',
+          description: response.data.description || '',
+          category: response.data.category || '',
+          publisher: response.data.publisher || '',
+          publishedYear: response.data.published_year || response.data.publishedYear || new Date().getFullYear(),
+          pages: response.data.pages || 0,
+          language: response.data.language || 'Indonesian',
+          coverImage: response.data.cover || response.data.coverImage || '',
+          stock: response.data.stock || 0,
+          available: response.data.available || 0,
+          status: response.data.status || 'available'
         });
       }
     } catch (error) {
@@ -94,23 +87,11 @@ const BookForm = () => {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
-      const url = isEdit 
-        ? `http://localhost:5000/api/admin/books/${id}`
-        : 'http://localhost:5000/api/admin/books';
-      
-      const response = await fetch(url, {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const result = isEdit 
+        ? await adminBooksAPI.update(id!, formData)
+        : await adminBooksAPI.create(formData);
 
-      const result = await response.json();
-
-      if (response.ok) {
+      if (result.success) {
         toast({
           title: 'Success',
           description: `Book ${isEdit ? 'updated' : 'created'} successfully`

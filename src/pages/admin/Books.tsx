@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
+import { adminBooksAPI } from '@/lib/api';
 
 interface Book {
   _id: string;
@@ -29,18 +30,16 @@ const Books = () => {
 
   const fetchBooks = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `http://localhost:5000/api/admin/books?page=${currentPage}&limit=10&search=${search}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      const data = await response.json();
-      setBooks(data.books);
-      setTotalPages(data.totalPages);
+      const response = await adminBooksAPI.getAll({
+        page: currentPage,
+        limit: 10,
+        search: search
+      });
+      
+      if (response.success) {
+        setBooks(response.data?.books || []);
+        setTotalPages(Math.ceil((response.data?.total || 0) / 10));
+      }
     } catch (error) {
       console.error('Error fetching books:', error);
     } finally {
@@ -52,20 +51,16 @@ const Books = () => {
     if (!confirm('Are you sure you want to delete this book?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/books/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
+      const result = await adminBooksAPI.delete(id);
+      
+      if (result.success) {
         toast({
           title: 'Success',
           description: 'Book deleted successfully'
         });
         fetchBooks();
+      } else {
+        throw new Error(result.message);
       }
     } catch (error) {
       toast({
