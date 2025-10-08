@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 const Book = require('../models/Book');
 
 const router = express.Router();
@@ -183,4 +183,4 @@ router.get('/categories/list', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
