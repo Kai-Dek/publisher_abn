@@ -1,6 +1,7 @@
 // API Configuration and Helper Functions
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://backend-publisher-abn.vercel.app/';
+// ✅ Hilangkan trailing slash
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://backend-publisher-abn.vercel.app';
 
 // Get auth token from localStorage
 const getAuthToken = (): string | null => {
@@ -41,6 +42,26 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
   return response;
 };
 
+// ✅ Helper untuk request tanpa auth
+const publicFetch = async (url: string, options: RequestInit = {}) => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    throw new Error(error.message || 'Request failed');
+  }
+
+  return response;
+};
+
 // Auth API
 export const authAPI = {
   register: async (data: {
@@ -51,31 +72,29 @@ export const authAPI = {
     address?: string;
   }) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await publicFetch('/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       const result = await response.json();
       return result;
     } catch (error) {
       console.error('Register error:', error);
-      return { success: false, message: 'Gagal mendaftar' };
+      return { success: false, message: error instanceof Error ? error.message : 'Gagal mendaftar' };
     }
   },
 
   login: async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await publicFetch('/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
       const result = await response.json();
       return result;
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, message: 'Gagal login' };
+      return { success: false, message: error instanceof Error ? error.message : 'Gagal login' };
     }
   },
 
@@ -109,7 +128,8 @@ export const booksAPI = {
       if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
       if (params?.order) queryParams.append('order', params.order);
 
-      const response = await fetch(`${API_BASE_URL}/books?${queryParams}`);
+      const url = queryParams.toString() ? `/books?${queryParams}` : '/books';
+      const response = await publicFetch(url);
       const result = await response.json();
       return result;
     } catch (error) {
@@ -120,7 +140,7 @@ export const booksAPI = {
 
   getById: async (id: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/books/${id}`);
+      const response = await publicFetch(`/books/${id}`);
       const result = await response.json();
       return result;
     } catch (error) {
@@ -131,7 +151,7 @@ export const booksAPI = {
 
   getFeatured: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/books/featured/list`);
+      const response = await publicFetch('/books/featured/list');
       const result = await response.json();
       return result;
     } catch (error) {
@@ -142,7 +162,7 @@ export const booksAPI = {
 
   getCategories: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/books/categories/list`);
+      const response = await publicFetch('/books/categories/list');
       const result = await response.json();
       return result;
     } catch (error) {
@@ -165,7 +185,8 @@ export const adminBooksAPI = {
       if (params?.limit) queryParams.append('limit', params.limit.toString());
       if (params?.search) queryParams.append('search', params.search);
 
-      const response = await authFetch(`/admin/books?${queryParams}`);
+      const url = queryParams.toString() ? `/admin/books?${queryParams}` : '/admin/books';
+      const response = await authFetch(url);
       return response.json();
     } catch (error) {
       console.error('Admin get books error:', error);
@@ -225,7 +246,8 @@ export const adminUsersAPI = {
       if (params?.limit) queryParams.append('limit', params.limit.toString());
       if (params?.search) queryParams.append('search', params.search);
 
-      const response = await authFetch(`/admin/users?${queryParams}`);
+      const url = queryParams.toString() ? `/admin/users?${queryParams}` : '/admin/users';
+      const response = await authFetch(url);
       return response.json();
     } catch (error) {
       console.error('Admin get users error:', error);
