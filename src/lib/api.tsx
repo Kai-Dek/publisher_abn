@@ -1,7 +1,8 @@
 // API Configuration and Helper Functions
 
-// ✅ Hilangkan trailing slash
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://backend-publisher-abn.vercel.app';
+
+console.log('🌐 API Base URL:', API_BASE_URL);
 
 // Get auth token from localStorage
 const getAuthToken = (): string | null => {
@@ -21,45 +22,89 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const fullUrl = `${API_BASE_URL}${url}`;
+    console.log('🔐 Auth Fetch:', fullUrl);
+    
+    const response = await fetch(fullUrl, {
+      ...options,
+      headers,
+    });
 
-  if (response.status === 401) {
-    // Token expired or invalid, redirect to login
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
+    console.log('📡 Response status:', response.status, response.statusText);
+
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      throw new Error('Unauthorized');
+    }
+
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('❌ Non-JSON response:', text.substring(0, 200));
+      throw new Error('Server returned non-JSON response');
+    }
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new Error(error.message || 'Request failed');
+    }
+
+    return response;
+  } catch (error) {
+    console.error('❌ Auth Fetch Error:', error);
+    throw error;
   }
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || 'Request failed');
-  }
-
-  return response;
 };
 
-// ✅ Helper untuk request tanpa auth
+// Helper untuk request tanpa auth
 const publicFetch = async (url: string, options: RequestInit = {}) => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const fullUrl = `${API_BASE_URL}${url}`;
+    console.log('🔍 Public Fetch:', fullUrl);
+    
+    const response = await fetch(fullUrl, {
+      ...options,
+      headers,
+      mode: 'cors', // Explicitly set CORS mode
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || 'Request failed');
+    console.log('📡 Response status:', response.status, response.statusText);
+
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    console.log('📄 Content-Type:', contentType);
+    
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('❌ Non-JSON response (first 200 chars):', text.substring(0, 200));
+      
+      // If it's HTML, likely 404 or wrong endpoint
+      if (text.includes('<!doctype') || text.includes('<html')) {
+        throw new Error(`Endpoint not found: ${url}. Backend might not be deployed correctly.`);
+      }
+      
+      throw new Error('Server returned non-JSON response');
+    }
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new Error(error.message || 'Request failed');
+    }
+
+    return response;
+  } catch (error) {
+    console.error('❌ Public Fetch Error:', error);
+    throw error;
   }
-
-  return response;
 };
 
 // Auth API
@@ -72,7 +117,7 @@ export const authAPI = {
     address?: string;
   }) => {
     try {
-      const response = await publicFetch('/auth/register', {
+      const response = await publicFetch('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify(data),
       });
@@ -80,13 +125,16 @@ export const authAPI = {
       return result;
     } catch (error) {
       console.error('Register error:', error);
-      return { success: false, message: error instanceof Error ? error.message : 'Gagal mendaftar' };
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Gagal mendaftar' 
+      };
     }
   },
 
   login: async (email: string, password: string) => {
     try {
-      const response = await publicFetch('/auth/login', {
+      const response = await publicFetch('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
@@ -94,13 +142,16 @@ export const authAPI = {
       return result;
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, message: error instanceof Error ? error.message : 'Gagal login' };
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Gagal login' 
+      };
     }
   },
 
   getCurrentUser: async () => {
     try {
-      const response = await authFetch('/auth/me');
+      const response = await authFetch('/api/auth/me');
       return response.json();
     } catch (error) {
       console.error('Get current user error:', error);
@@ -123,51 +174,70 @@ export const booksAPI = {
       const queryParams = new URLSearchParams();
       if (params?.page) queryParams.append('page', params.page.toString());
       if (params?.limit) queryParams.append('limit', params.limit.toString());
-      if (params?.category) queryParams.append('category', params.category);
+      if (params?.category && params.category !== 'all') queryParams.append('category', params.category);
       if (params?.search) queryParams.append('search', params.search);
       if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
       if (params?.order) queryParams.append('order', params.order);
 
-      const url = queryParams.toString() ? `/books?${queryParams}` : '/books';
+      const url = queryParams.toString() ? `/api/books?${queryParams}` : '/api/books';
       const response = await publicFetch(url);
       const result = await response.json();
       return result;
     } catch (error) {
       console.error('Get books error:', error);
-      return { success: false, message: 'Gagal mengambil data buku', data: { books: [], total: 0 } };
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Gagal mengambil data buku',
+        data: { books: [], total: 0 } 
+      };
     }
   },
 
   getById: async (id: string) => {
     try {
-      const response = await publicFetch(`/books/${id}`);
+      const response = await publicFetch(`/api/books/${id}`);
       const result = await response.json();
       return result;
     } catch (error) {
       console.error('Get book by ID error:', error);
-      return { success: false, message: 'Gagal mengambil detail buku' };
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Gagal mengambil detail buku'
+      };
     }
   },
 
   getFeatured: async () => {
     try {
-      const response = await publicFetch('/books/featured/list');
+      console.log('🌟 Fetching featured books...');
+      const response = await publicFetch('/api/books/featured/list');
       const result = await response.json();
+      console.log('✅ Featured books result:', result);
       return result;
     } catch (error) {
       console.error('Get featured books error:', error);
-      return { success: false, message: 'Gagal mengambil buku featured', data: [] };
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Gagal mengambil buku featured',
+        data: [] 
+      };
     }
   },
 
   getCategories: async () => {
     try {
-      const response = await publicFetch('/books/categories/list');
+      console.log('📚 Fetching categories...');
+      const response = await publicFetch('/api/books/categories/list');
       const result = await response.json();
+      console.log('✅ Categories result:', result);
       return result;
     } catch (error) {
       console.error('Get categories error:', error);
-      return { success: false, message: 'Gagal mengambil kategori', data: [] };
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Gagal mengambil kategori',
+        data: [] 
+      };
     }
   },
 };
@@ -185,7 +255,7 @@ export const adminBooksAPI = {
       if (params?.limit) queryParams.append('limit', params.limit.toString());
       if (params?.search) queryParams.append('search', params.search);
 
-      const url = queryParams.toString() ? `/admin/books?${queryParams}` : '/admin/books';
+      const url = queryParams.toString() ? `/api/admin/books?${queryParams}` : '/api/admin/books';
       const response = await authFetch(url);
       return response.json();
     } catch (error) {
@@ -196,7 +266,7 @@ export const adminBooksAPI = {
 
   create: async (bookData: any) => {
     try {
-      const response = await authFetch('/admin/books', {
+      const response = await authFetch('/api/admin/books', {
         method: 'POST',
         body: JSON.stringify(bookData),
       });
@@ -209,7 +279,7 @@ export const adminBooksAPI = {
 
   update: async (id: string, bookData: any) => {
     try {
-      const response = await authFetch(`/admin/books/${id}`, {
+      const response = await authFetch(`/api/admin/books/${id}`, {
         method: 'PUT',
         body: JSON.stringify(bookData),
       });
@@ -222,7 +292,7 @@ export const adminBooksAPI = {
 
   delete: async (id: string) => {
     try {
-      const response = await authFetch(`/admin/books/${id}`, {
+      const response = await authFetch(`/api/admin/books/${id}`, {
         method: 'DELETE',
       });
       return response.json();
@@ -246,7 +316,7 @@ export const adminUsersAPI = {
       if (params?.limit) queryParams.append('limit', params.limit.toString());
       if (params?.search) queryParams.append('search', params.search);
 
-      const url = queryParams.toString() ? `/admin/users?${queryParams}` : '/admin/users';
+      const url = queryParams.toString() ? `/api/admin/users?${queryParams}` : '/api/admin/users';
       const response = await authFetch(url);
       return response.json();
     } catch (error) {
@@ -257,7 +327,7 @@ export const adminUsersAPI = {
 
   updateStatus: async (id: string, status: string) => {
     try {
-      const response = await authFetch(`/admin/users/${id}/status`, {
+      const response = await authFetch(`/api/admin/users/${id}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       });
@@ -270,7 +340,7 @@ export const adminUsersAPI = {
 
   delete: async (id: string) => {
     try {
-      const response = await authFetch(`/admin/users/${id}`, {
+      const response = await authFetch(`/api/admin/users/${id}`, {
         method: 'DELETE',
       });
       return response.json();
@@ -285,7 +355,7 @@ export const adminUsersAPI = {
 export const adminStatsAPI = {
   getStats: async () => {
     try {
-      const response = await authFetch('/admin/stats');
+      const response = await authFetch('/api/admin/stats');
       return response.json();
     } catch (error) {
       console.error('Get stats error:', error);
