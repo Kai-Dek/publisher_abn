@@ -1,6 +1,6 @@
 // API Configuration and Helper Functions
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://backend-publisher-abn.vercel.app';
+const API_BASE_URL = import.meta.env.NEXT_PUBLIC_API_URL || 'https://backend-publisher-abn.vercel.app';
 
 console.log('🌐 API Base URL:', API_BASE_URL);
 
