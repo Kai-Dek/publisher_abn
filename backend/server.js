@@ -15,7 +15,8 @@ const corsOptions = {
   origin: [
     'http://localhost:8080',
     'https://publisher-abn.vercel.app',
-    'https://publisher-abn-*.vercel.app' // untuk preview deployments
+    'https://publisher-abn-*.vercel.app', // untuk preview deployments
+    'https://adillamedia.vercel.app' // Frontend Anda
   ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -31,7 +32,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Request Logger untuk debugging
 app.use((req, res, next) => {
-  console.log(`📍 ${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log(`📝 ${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log(`Origin: ${req.headers.origin}`); // Debug CORS
   next();
 });
 

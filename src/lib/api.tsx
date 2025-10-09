@@ -6,6 +6,7 @@ console.log('🌐 API Base URL:', API_BASE_URL);
 
 // Get auth token from localStorage
 const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null; // SSR safe
   return localStorage.getItem('token');
 };
 
@@ -24,19 +25,25 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
 
   try {
     const fullUrl = `${API_BASE_URL}${url}`;
-    console.log('🔐 Auth Fetch:', fullUrl);
+    console.log('📝 Auth Fetch:', fullUrl);
     
     const response = await fetch(fullUrl, {
       ...options,
       headers,
+      mode: 'cors', // Explicitly set CORS mode
+      credentials: 'include', // Include cookies if needed
     });
 
     console.log('📡 Response status:', response.status, response.statusText);
 
     if (response.status === 401) {
+      console.warn('🔐 Unauthorized - Clearing token');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only redirect if in browser environment
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
       throw new Error('Unauthorized');
     }
 
@@ -50,7 +57,7 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new Error(error.message || 'Request failed');
+      throw new Error(error.message || `Request failed with status ${response.status}`);
     }
 
     return response;
@@ -60,7 +67,7 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
   }
 };
 
-// Helper untuk request tanpa auth
+// Helper untuk request tanpa auth (Public)
 const publicFetch = async (url: string, options: RequestInit = {}) => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -69,12 +76,13 @@ const publicFetch = async (url: string, options: RequestInit = {}) => {
 
   try {
     const fullUrl = `${API_BASE_URL}${url}`;
-    console.log('🔍 Public Fetch:', fullUrl);
+    console.log('📝 Public Fetch:', fullUrl);
     
     const response = await fetch(fullUrl, {
       ...options,
       headers,
       mode: 'cors', // Explicitly set CORS mode
+      credentials: 'include',
     });
 
     console.log('📡 Response status:', response.status, response.statusText);
@@ -97,7 +105,7 @@ const publicFetch = async (url: string, options: RequestInit = {}) => {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new Error(error.message || 'Request failed');
+      throw new Error(error.message || `Request failed with status ${response.status}`);
     }
 
     return response;
