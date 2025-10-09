@@ -1,4 +1,4 @@
-import express from 'express';
+const express = require('express');
 const Book = require('../models/Book');
 const User = require('../models/User');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
@@ -176,4 +176,4 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
